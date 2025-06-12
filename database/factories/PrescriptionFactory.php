@@ -45,7 +45,7 @@ class PrescriptionFactory extends Factory
 
         return [
             'patient_id' => Patient::factory(),
-            'doctor_id' => User::where('role', 'dokter')->inRandomOrder()->first()->id ?? User::factory(['role' => 'dokter']),
+            'doctor_id' => User::role(User::ROLE_DOCTOR)->inRandomOrder()->first()?->id ?? User::factory()->create()->assignRole(User::ROLE_DOCTOR)->id,
             'symptom' => $this->faker->paragraph(),
             'prescription_status' => $prescriptionStatus,
             'payment_status' => $paymentStatus,

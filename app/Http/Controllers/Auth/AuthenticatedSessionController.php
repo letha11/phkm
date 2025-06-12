@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,6 +33,18 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        if (Auth::user()->hasRole(User::ROLE_ADMIN)) {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        if (Auth::user()->hasRole(User::ROLE_DOCTOR)) {
+            return redirect()->intended(route('dashboard.doctor', absolute: false));
+        }
+
+        if (Auth::user()->hasRole(User::ROLE_PHARMACIST)) {
+            return redirect()->intended(route('dashboard.pharmacist', absolute: false));
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

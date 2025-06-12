@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('password');
             $table->string('name');
             $table->date('date_of_birth')->nullable();
-            $table->enum('role', ['admin', 'dokter', 'apoteker']);
             $table->timestamps();
         });
 

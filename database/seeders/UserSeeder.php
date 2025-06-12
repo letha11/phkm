@@ -16,28 +16,28 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        $admin = User::create([
             'name' => 'Admin User',
             'username' => 'admin',
             'password' => Hash::make('password'),
-            'role' => 'admin',
             'date_of_birth' => '1990-01-01',
         ]);
+        $admin->assignRole(User::ROLE_ADMIN);
 
-        User::create([
+        $doctor = User::create([
             'name' => 'Doctor User',
             'username' => 'doctor',
             'password' => Hash::make('password'),
-            'role' => 'dokter',
             'date_of_birth' => '1985-05-15',
         ]);
+        $doctor->assignRole(User::ROLE_DOCTOR);
 
-        User::create([
+        $pharmacist = User::create([
             'name' => 'Pharmacist User',
             'username' => 'apoteker',
             'password' => Hash::make('password'),
-            'role' => 'apoteker',
             'date_of_birth' => '1992-08-20',
         ]);
+        $pharmacist->assignRole(User::ROLE_PHARMACIST);
     }
 }
