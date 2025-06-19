@@ -3,9 +3,12 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\User;
+use App\Http\Controllers\Pharmacist\DashboardController as PharmacistDashboardController;
+use App\Http\Controllers\Pharmacist\PatientDetailController as PharmacistPatientDetailController;
+
 Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+    return redirect()->route('login');
+});
 
 Route::middleware('auth')->group(function () {
     Route::group(['middleware' => 'role:' . User::ROLE_ADMIN], function () {
@@ -27,9 +30,17 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::group(['middleware' => 'role:' . User::ROLE_PHARMACIST], function () {
-        Route::get('dashboard/pharmacist', function () {
-            return Inertia::render('pharmacist/Dashboard');
-        })->name('dashboard.pharmacist');
+        // Dashboard routes
+        Route::get('dashboard/pharmacist', [PharmacistDashboardController::class, 'index'])->name('dashboard.pharmacist');
+        
+        // Patient detail routes
+        Route::get('dashboard/pharmacist/patient/{id}', [PharmacistPatientDetailController::class, 'show'])->name('dashboard.pharmacist.patient');
+        Route::put('dashboard/pharmacist/patient/{id}/status', [PharmacistPatientDetailController::class, 'updateStatus'])->name('pharmacist.patient.status');
+        Route::post('dashboard/pharmacist/patient/{id}/payment', [PharmacistPatientDetailController::class, 'processPayment'])->name('pharmacist.patient.payment');
+        Route::post('dashboard/pharmacist/patient/{id}/invoice', [PharmacistPatientDetailController::class, 'getInvoiceData'])->name('pharmacist.patient.invoice');
+        
+        // Invoice generation (opens modal on same page) - kept for backward compatibility
+        Route::get('prescriptions/{id}/invoice', [PharmacistPatientDetailController::class, 'generateInvoice'])->name('prescriptions.invoice');
     });
 });
 require __DIR__.'/settings.php';

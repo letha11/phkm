@@ -102,6 +102,8 @@
   --primary-foreground: #FAF7FF; /* Adapted from Login.vue button text-[#FAF7FF] */
   --secondary: #EBEBEB;
   --secondary-foreground: #171717;
+  --primary-text: #17222A;
+  --secondary-text: #6F7985;
   --muted: #F5F5F5;
   --muted-foreground: #737373; /* Used by Input.vue for placeholder */
   --accent: #F5F5F5;
@@ -191,10 +193,10 @@
 }
 
 html, body {
-    background-color: #405BE6;
-    background-image: url('/assets/icons/repeating-bg.svg');
-    background-size: 80px 80px;
-    background-repeat: repeat;
+    background-color: #405BE6 !important;
+    background-image: url('/assets/icons/repeating-bg.svg') !important;
+    background-size: 80px 80px !important;
+    background-repeat: repeat !important;
 }
 
 /* Epilogue Font Faces */

@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import { Input } from '@/components/ui/input';
 import AuthInputWithIcon from '@/components/auth/AuthInputWithIcon.vue';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { ref } from 'vue';
 
 defineProps<{

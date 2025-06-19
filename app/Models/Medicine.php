@@ -22,6 +22,8 @@ class Medicine extends Model
     protected $fillable = [
         'name',
         'stock',
+        'type',
+        'description',
         'dosages',
         'price',
     ];

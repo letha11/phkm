@@ -53,6 +53,8 @@ namespace App\Models{
  * @property int $id
  * @property string $name
  * @property int $stock
+ * @property string $type
+ * @property string|null $description
  * @property array<array-key, mixed> $dosages
  * @property numeric $price
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -67,11 +69,13 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereDosages($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine wherePrice($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereStock($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine withTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Medicine withoutTrashed()
@@ -111,7 +115,6 @@ namespace App\Models{
  * @property int $patient_id
  * @property int $doctor_id
  * @property string $symptom
- * @property string $prescription_status
  * @property string $payment_status
  * @property numeric|null $consultation_fee
  * @property numeric|null $ppn_rate_applied
@@ -120,7 +123,6 @@ namespace App\Models{
  * @property string|null $payment_method
  * @property string|null $notes_pharmacist
  * @property \Illuminate\Support\Carbon $submitted_at
- * @property \Illuminate\Support\Carbon|null $completed_at
  * @property \Illuminate\Support\Carbon|null $paid_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -133,7 +135,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereCompletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereConsultationFee($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereDoctorId($value)
@@ -145,7 +146,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePaymentMethod($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePaymentStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePpnRateApplied($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePrescriptionStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereSubmittedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereSymptom($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereTotalAmount($value)
@@ -193,7 +193,6 @@ namespace App\Models{
  * @property string $password
  * @property string $name
  * @property \Illuminate\Support\Carbon|null $date_of_birth
- * @property string $role
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
@@ -215,7 +214,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUsername($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)

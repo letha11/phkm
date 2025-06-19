@@ -34,19 +34,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $route = '';
+
         if (Auth::user()->hasRole(User::ROLE_ADMIN)) {
-            return redirect()->intended(route('dashboard', absolute: false));
+            $route = 'dashboard';
+        } elseif (Auth::user()->hasRole(User::ROLE_DOCTOR)) {
+            $route = 'dashboard.doctor';
+        } elseif (Auth::user()->hasRole(User::ROLE_PHARMACIST)) {
+            $route = 'dashboard.pharmacist';
         }
 
-        if (Auth::user()->hasRole(User::ROLE_DOCTOR)) {
-            return redirect()->intended(route('dashboard.doctor', absolute: false));
-        }
-
-        if (Auth::user()->hasRole(User::ROLE_PHARMACIST)) {
-            return redirect()->intended(route('dashboard.pharmacist', absolute: false));
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route($route);
     }
 
     /**

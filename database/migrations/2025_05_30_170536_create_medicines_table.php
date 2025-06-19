@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name')->index();
             $table->integer('stock')->default(0);
+            $table->string('type')->default('tablet');
+            $table->text('description')->nullable();
             $table->json('dosages');
             $table->decimal('price', 8, 2);
             $table->timestamps();

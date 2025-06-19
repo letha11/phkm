@@ -13,7 +13,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 </script>
 
 <template>
-    <Head title="Dashboard Dokter" />
+    <!-- <Head title="Dashboard Dokter" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
@@ -32,5 +32,5 @@ const breadcrumbs: BreadcrumbItem[] = [
                 <PlaceholderPattern />
             </div>
         </div>
-    </AppLayout>
+    </AppLayout> -->
 </template>

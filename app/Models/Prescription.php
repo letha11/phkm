@@ -27,7 +27,6 @@ class Prescription extends Model
         'patient_id',
         'doctor_id',
         'symptom',
-        'prescription_status',
         'payment_status',
         'consultation_fee',
         'ppn_rate_applied',
@@ -36,7 +35,6 @@ class Prescription extends Model
         'payment_method',
         'notes_pharmacist',
         'submitted_at',
-        'completed_at',
         'paid_at',
     ];
 

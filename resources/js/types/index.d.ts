@@ -18,6 +18,30 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface PaginationData {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
+
+export interface FilterData {
+    search: string;
+    status: string;
+    date_range: string;
+    doctor: string;
+    per_page: number;
+}
+
+export interface StatsData {
+    total: number;
+    completed: number;
+    pending: number;
+    failed: number;
+}
+
 export interface SharedData extends PageProps {
     name: string;
     quote: { message: string; author: string };

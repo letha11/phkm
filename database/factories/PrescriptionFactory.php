@@ -30,24 +30,13 @@ class PrescriptionFactory extends Factory
     public function definition(): array
     {
         $submittedAt = $this->faker->dateTimeBetween('-1 month', 'now');
-        $prescriptionStatus = $this->faker->randomElement(['accepted', 'preparing', 'completed']);
-        $paymentStatus = 'waiting';
-        $completedAt = null;
-        $paidAt = null;
-
-        if ($prescriptionStatus === 'completed') {
-            $completedAt = Carbon::instance($submittedAt)->addHours($this->faker->numberBetween(1, 48));
-            $paymentStatus = $this->faker->randomElement(['waiting', 'failed', 'success']);
-            if ($paymentStatus === 'success') {
-                $paidAt = Carbon::instance($completedAt)->addMinutes($this->faker->numberBetween(5, 60));
-            }
-        }
+        $paymentStatus = $this->faker->randomElement(['waiting', 'failed', 'success']);
+        $paidAt = Carbon::instance($submittedAt)->addMinutes($this->faker->numberBetween(5, 60));
 
         return [
             'patient_id' => Patient::factory(),
             'doctor_id' => User::role(User::ROLE_DOCTOR)->inRandomOrder()->first()?->id ?? User::factory()->create()->assignRole(User::ROLE_DOCTOR)->id,
             'symptom' => $this->faker->paragraph(),
-            'prescription_status' => $prescriptionStatus,
             'payment_status' => $paymentStatus,
             'consultation_fee' => $this->faker->randomElement([null, $this->faker->randomFloat(2, 5, 50)]),
             'ppn_rate_applied' => $this->faker->randomElement([null, 0.11]), // Assuming 11% PPN
@@ -56,7 +45,6 @@ class PrescriptionFactory extends Factory
             'payment_method' => $paymentStatus === 'success' ? $this->faker->randomElement(['cash', 'card']) : null,
             'notes_pharmacist' => $this->faker->optional()->sentence(),
             'submitted_at' => $submittedAt,
-            'completed_at' => $completedAt,
             'paid_at' => $paidAt,
         ];
     }
