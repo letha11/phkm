@@ -103,7 +103,7 @@ const generateInvoice = () => {
     preserveScroll: true,
     onSuccess: (page) => {
       // The invoice modal will be handled by the PatientDetail page component via flash data
-      const flash = page.props.flash as { invoice?: any };
+      let flash = page.props.flash as { invoice?: any};
       emit('invoiceGenerated', flash?.invoice);
     },
     onError: (errors) => {

@@ -38,9 +38,6 @@ Route::middleware('auth')->group(function () {
         Route::put('dashboard/pharmacist/patient/{id}/status', [PharmacistPatientDetailController::class, 'updateStatus'])->name('pharmacist.patient.status');
         Route::post('dashboard/pharmacist/patient/{id}/payment', [PharmacistPatientDetailController::class, 'processPayment'])->name('pharmacist.patient.payment');
         Route::post('dashboard/pharmacist/patient/{id}/invoice', [PharmacistPatientDetailController::class, 'getInvoiceData'])->name('pharmacist.patient.invoice');
-        
-        // Invoice generation (opens modal on same page) - kept for backward compatibility
-        Route::get('prescriptions/{id}/invoice', [PharmacistPatientDetailController::class, 'generateInvoice'])->name('prescriptions.invoice');
     });
 });
 require __DIR__.'/settings.php';

@@ -5,6 +5,7 @@ import LogoutButton from '@/components/ui/button/LogoutButton.vue';
 import LogoutDialog from '@/components/ui/dialog/LogoutDialog.vue';
 import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
+import { showToast } from '@/lib/utils';
 
 // Modal state
 const showLogoutModal = ref(false);
@@ -278,15 +279,6 @@ const paginationInfo = computed(() => {
     total: pagination.value.total || 0,
   };
 });
-
-// Format currency
-const formatCurrency = (amount: number | null | undefined) => {
-  if (!amount) return 'Rp 0';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR'
-  }).format(amount);
-};
 </script>
 
 <template>
@@ -908,6 +900,7 @@ const formatCurrency = (amount: number | null | undefined) => {
               {{ isLoading ? 'Memuat...' : 'Reset Semua Filter' }}
             </button>
             <button
+              @click="showToast('Laporan Harian berhasil diunduh')"
               :disabled="isLoading"
               :class="[
                 'w-full text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg',

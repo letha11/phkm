@@ -6,6 +6,12 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
+import Toast, {PluginOptions} from 'vue-toastification';
+import "vue-toastification/dist/index.css";
+
+const options: PluginOptions = {
+    timeout: 3000,
+}
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -28,6 +34,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(Toast, options)
             .use(ZiggyVue)
             .mount(el);
     },

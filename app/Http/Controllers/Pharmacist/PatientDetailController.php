@@ -58,12 +58,12 @@ class PatientDetailController extends Controller
             $prescription->save();
         });
 
-        return redirect()->back()->with('message', 'Pembayaran berhasil diproses');
+        return redirect()->back()->with([
+            'message' => 'Pembayaran berhasil diproses',
+            'type' => 'success',
+        ]);
     }
 
-    /**
-     * Generate invoice data via POST (no route change)
-     */
     public function getInvoiceData(Request $request, string $id): RedirectResponse
     {
         $prescription = Prescription::with(['patient', 'doctor', 'prescriptionItems.medicine'])
@@ -101,57 +101,8 @@ class PatientDetailController extends Controller
         ];
 
         return redirect()->back()->with([
-            'message' => 'Invoice berhasil dibuat',
             'invoice' => $invoiceData,
             'showInvoiceModal' => true,
-        ]);
-    }
-
-    /**
-     * Generate invoice data
-     */
-    public function generateInvoice(string $id): Response
-    {
-        $prescription = Prescription::with(['patient', 'doctor', 'prescriptionItems.medicine'])
-            ->where('payment_status', 'success')
-            ->findOrFail($id);
-
-        $invoiceData = [
-            'invoice_number' => 'INV-' . str_pad((string)$prescription->id, 6, '0', STR_PAD_LEFT),
-            'date' => $prescription->paid_at->format('d/m/Y H:i'),
-            'patient' => [
-                'name' => $prescription->patient->name,
-                'date_of_birth' => $prescription->patient->date_of_birth->format('d/m/Y'),
-            ],
-            'doctor' => $prescription->doctor->name,
-            'items' => $prescription->prescriptionItems->map(function ($item) {
-                return [
-                    'medicine_name' => $item->medicine->name,
-                    'dosage' => $item->medicine_dosage_prescribed,
-                    'quantity' => $item->medicine_amount_prescribed,
-                    'price_per_unit' => $item->medicine_price_at_prescription,
-                    'total_price' => $item->medicine_price_at_prescription * $item->medicine_amount_prescribed,
-                ];
-            }),
-            'consultation_fee' => $prescription->consultation_fee,
-            'medicines_subtotal' => $prescription->prescriptionItems->sum(function ($item) {
-                return $item->medicine_price_at_prescription * $item->medicine_amount_prescribed;
-            }),
-            'ppn_rate' => $prescription->ppn_rate_applied * 100, // Convert to percentage
-            'ppn_amount' => ($prescription->total_amount - $prescription->consultation_fee - $prescription->prescriptionItems->sum(function ($item) {
-                return $item->medicine_price_at_prescription * $item->medicine_amount_prescribed;
-            })),
-            'total_amount' => $prescription->total_amount,
-            'paid_amount' => $prescription->paid_amount,
-            'payment_method' => $prescription->payment_method,
-        ];
-
-        $prescriptionData = $this->formatPrescriptionData($prescription);
-
-        return Inertia::render('pharmacist/PatientDetail', [
-            'patient' => $prescriptionData,
-            'invoice' => $invoiceData,
-            'showInvoiceModal' => true
         ]);
     }
 

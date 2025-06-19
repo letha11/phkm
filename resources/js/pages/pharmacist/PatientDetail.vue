@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, showToast } from '@/lib/utils';
 import type { Patient } from '@/types/patient';
 import PrescriptionActions from '@/components/pharmacist/PrescriptionActions.vue';
+
 interface InvoiceItem {
   medicine_name: string;
   dosage: string;
@@ -34,9 +35,6 @@ interface InvoiceData {
 const page = usePage();
 const patient = ref<Patient>(page.props.patient as Patient);
 const invoiceData = ref<InvoiceData | null>(page.props.invoice as InvoiceData || null);
-const flashMessage = ref<string | null>(
-  (page.props.flash as { message?: string })?.message || null
-);
 
 // Modal states
 const showStatusModal = ref(false);
@@ -60,7 +58,7 @@ onMounted(() => {
   
   // Show flash message if any
   if ((page.props.flash as any)?.message) {
-    showFlashMessage((page.props.flash as any).message);
+    showToast((page.props.flash as any).message, (page.props.flash as any).type);
   }
 });
 
@@ -83,23 +81,9 @@ watch(() => page.props, (newProps) => {
   
   // Handle flash message
   if ((newProps.flash as any)?.message) {
-    showFlashMessage((newProps.flash as any).message);
+    showToast((newProps.flash as any).message, (newProps.flash as any).type);
   }
 }, { deep: true });
-
-// Watch for showInvoiceModal changes
-watch(showInvoiceModal, (newValue) => {
-  console.log('showInvoiceModal changed to:', newValue);
-  console.log('invoiceData:', invoiceData.value);
-});
-
-// Helper function to show flash message
-const showFlashMessage = (message: string) => {
-  flashMessage.value = message;
-  setTimeout(() => {
-    flashMessage.value = null;
-  }, 3000);
-};
 
 // Helper functions for status display
 const getStatusColor = (status: Patient['status']) => {
@@ -141,19 +125,6 @@ const getStatusText = (status: Patient['status']) => {
   }
 };
 
-const getPrescriptionStatusText = (status: string) => {
-  switch (status) {
-    case 'accepted':
-      return 'Diterima';
-    case 'preparing':
-      return 'Sedang Dibuat';
-    case 'completed':
-      return 'Selesai';
-    default:
-      return status;
-  }
-};
-
 // Format medications into array for better display
 const formattedMedications = computed(() => patient.value.medications.split('\n'));
 
@@ -174,11 +145,11 @@ const updatePrescriptionStatus = () => {
       if (page.props.patient) {
         patient.value = page.props.patient as Patient;
       }
-      showFlashMessage('Status berhasil diupdate');
+      showToast('Status berhasil diupdate', 'success');
     },
     onError: (errors) => {
       console.error('Error updating status:', errors);
-      showFlashMessage('Terjadi kesalahan saat mengupdate status');
+      showToast('Terjadi kesalahan saat mengupdate status', 'error');
     },
     onFinish: () => {
       isLoading.value = false;
@@ -204,52 +175,17 @@ const processPayment = () => {
       if (page.props.patient) {
         patient.value = page.props.patient as Patient;
       }
-      showFlashMessage('Pembayaran berhasil diproses');
+      showToast('Pembayaran berhasil diproses', 'success');
     },
     onError: (errors) => {
       console.error('Error processing payment:', errors);
-      showFlashMessage('Terjadi kesalahan saat memproses pembayaran');
+      showToast('Terjadi kesalahan saat memproses pembayaran', 'error');
     },
     onFinish: () => {
       isLoading.value = false;
     }
   });
 };
-
-// Generate invoice using Inertia router (POST to same page)
-const generateInvoice = () => {
-  if (isLoading.value) return;
-  
-  isLoading.value = true;
-  
-  router.post(`/dashboard/pharmacist/patient/${patient.value.id}/invoice`, {}, {
-    preserveState: false, // Allow state refresh to get new props
-    preserveScroll: true,
-    onSuccess: (page: any) => {
-      
-      // Data is now available directly in page.props via redirect()->back()->with()
-      if (page.props.invoice) {
-        invoiceData.value = page.props.invoice as InvoiceData;
-        showInvoiceModal.value = true;
-      }
-      
-      // Handle flash message from middleware
-      if ((page.props.flash as any)?.message) {
-        showFlashMessage((page.props.flash as any).message);
-      }
-      
-      if (!page.props.invoice) {
-      }
-    },
-    onError: (errors) => {
-      showFlashMessage('Terjadi kesalahan saat membuat invoice');
-    },
-    onFinish: () => {
-      isLoading.value = false;
-    }
-  });
-};
-
 // Print invoice
 const printInvoice = () => {
   // Focus on invoice content before printing
@@ -297,19 +233,6 @@ const printInvoice = () => {
 </script>
 
 <template>
-  <!-- Flash Message -->
-  <div v-if="flashMessage" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-    </svg>
-    <span class="font-medium text-sm">{{ flashMessage }}</span>
-    <button @click="flashMessage = null" class="ml-2 text-white hover:text-gray-200">
-      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-    </button>
-  </div>
-
   <!-- Main Patient Detail Container -->
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
     <!-- Main Content Area -->
@@ -535,7 +458,7 @@ const printInvoice = () => {
         </div>
 
         <!-- Action Buttons -->
-        <div class="w-full flex justify-center gap-4 mt-8 pt-5 border-t">
+        <div class="w-full flex justify-center gap-4 mt-8 pt-5 border-t border-gray-200">
          <PrescriptionActions 
           :prescriptionId="patient.id"
           :prescriptionStatus="patient.status"
