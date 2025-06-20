@@ -115,6 +115,7 @@ namespace App\Models{
  * @property int $patient_id
  * @property int $doctor_id
  * @property string $symptom
+ * @property string $prescription_status
  * @property string $payment_status
  * @property numeric|null $consultation_fee
  * @property numeric|null $ppn_rate_applied
@@ -146,6 +147,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePaymentMethod($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePaymentStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePpnRateApplied($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription wherePrescriptionStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereSubmittedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereSymptom($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Prescription whereTotalAmount($value)

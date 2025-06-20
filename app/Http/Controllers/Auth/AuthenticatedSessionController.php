@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Providers\Filament\AdminPanelProvider;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -37,14 +38,15 @@ class AuthenticatedSessionController extends Controller
         $route = '';
 
         if (Auth::user()->hasRole(User::ROLE_ADMIN)) {
-            $route = 'dashboard';
+            return redirect()->intended(AdminPanelProvider::getUrl());
         } elseif (Auth::user()->hasRole(User::ROLE_DOCTOR)) {
-            $route = 'dashboard.doctor';
+            return redirect()->route('dashboard.doctor');
         } elseif (Auth::user()->hasRole(User::ROLE_PHARMACIST)) {
-            $route = 'dashboard.pharmacist';
+            return redirect()->route('dashboard.pharmacist');
         }
 
-        return redirect()->route($route);
+        // return redirect()->route($route);
+
     }
 
     /**

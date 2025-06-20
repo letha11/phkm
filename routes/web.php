@@ -11,11 +11,11 @@ Route::get('/', function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::group(['middleware' => 'role:' . User::ROLE_ADMIN], function () {
-        Route::get('dashboard', function () {
-            return Inertia::render('Dashboard');
-        })->name('dashboard');
-    });
+    // Route::group(['middleware' => 'role:' . User::ROLE_ADMIN], function () {
+    //     Route::get('dashboard', function () {
+    //         return Livewire::render('admin');
+    //     })->name('dashboard');
+    // });
     
     // Route::middleware('role:' . User::ROLE_ADMIN)->group(function () {
     //     Route::get('dashboard', function () {
