@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients');
             $table->foreignId('doctor_id')->constrained('users');
             $table->text('symptom');
+            $table->enum('prescription_status', ['accepted', 'preparing', 'completed'])->default('accepted')->index();
             $table->enum('payment_status', ['waiting', 'failed', 'success'])->default('waiting')->index();
             $table->decimal('consultation_fee', 8, 2)->nullable();
             $table->decimal('ppn_rate_applied', 5, 2)->nullable();

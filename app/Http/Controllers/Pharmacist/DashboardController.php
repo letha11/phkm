@@ -45,14 +45,14 @@ class DashboardController extends Controller
         // Apply status filter
         if ($status !== 'all') {
             switch ($status) {
-                case 'waiting':
-                    $query->where('payment_status', 'waiting');
+                case 'accepted':
+                    $query->where('prescription_status', 'accepted');
                     break;
-                case 'success':
-                    $query->where('payment_status', 'success');
+                case 'preparing':
+                    $query->where('prescription_status', 'preparing');
                     break;
-                case 'failed':
-                    $query->where('payment_status', 'failed');
+                case 'completed':
+                    $query->where('prescription_status', 'completed');
                     break;
             }
         }
@@ -133,16 +133,18 @@ class DashboardController extends Controller
     private function getPrescriptionStats(): array
     {
         $total = Prescription::count();
-        $completed = Prescription::where('payment_status', 'success')
+        $completed = Prescription::where('prescription_status', 'completed')
                                 ->count();
-        $pending = Prescription::where('payment_status', 'waiting')->count();
-        $failed = Prescription::where('payment_status', 'failed')->count();
+        $pending = Prescription::where('prescription_status', 'accepted')
+                             ->count();
+        $preparing = Prescription::where('prescription_status', 'preparing')
+                               ->count();
 
         return [
             'total' => $total,
             'completed' => $completed,
             'pending' => $pending,
-            'failed' => $failed,
+            'preparing' => $preparing,
         ];
     }
 
@@ -192,15 +194,20 @@ class DashboardController extends Controller
         // Calculate filtered statistics
         $total = (clone $baseQuery)->count();
         
-        $completed = (clone $baseQuery)->where('payment_status', 'success')
+        $completed = (clone $baseQuery)->where('prescription_status', 'completed')
                                       ->count();
         
-        $pending = (clone $baseQuery)->where('payment_status', 'waiting')->count();
+        $pending = (clone $baseQuery)->where('prescription_status', 'accepted')
+                                    ->count();
+        
+        $preparing = (clone $baseQuery)->where('prescription_status', 'preparing')
+                                      ->count();
 
         return [
             'total' => $total,
             'completed' => $completed,
             'pending' => $pending,
+            'preparing' => $preparing,
         ];
     }
 
@@ -219,27 +226,11 @@ class DashboardController extends Controller
             'medications' => $prescription->prescriptionItems->map(function ($item) {
                 return $item->medicine->name . ', ' . $item->medicine_dosage_prescribed . ', ' . $item->medicine_amount_prescribed;
             })->join("\n"),
-            'status' => $this->mapPrescriptionStatus($prescription->payment_status),
+            'status' => $prescription->prescription_status,
+            'prescription_status' => $prescription->prescription_status,
             'payment_status' => $prescription->payment_status,
             'doctor_name' => $prescription->doctor->name,
-            'submitted_at' => $prescription->submitted_at->toISOString(),
-            'total_amount' => $prescription->total_amount,
+            'submitted_at' => $prescription->submitted_at,
         ];
-    }
-
-    /**
-     * Map prescription and payment status to UI status
-     */
-    private function mapPrescriptionStatus(string $paymentStatus): string
-    {
-        if ($paymentStatus === 'success') {
-            return 'success';
-        }
-        
-        if ($paymentStatus === 'failed') {
-            return 'failed';
-        }
-        
-        return 'waiting';
     }
 }

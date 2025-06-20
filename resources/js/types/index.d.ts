@@ -39,7 +39,7 @@ export interface StatsData {
     total: number;
     completed: number;
     pending: number;
-    failed: number;
+    preparing: number;
 }
 
 export interface SharedData extends PageProps {

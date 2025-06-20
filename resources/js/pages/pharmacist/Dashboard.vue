@@ -3,12 +3,20 @@ import type { Patient } from '@/types/patient.d';
 import type { PaginationData, FilterData, StatsData } from '@/types';
 import LogoutButton from '@/components/ui/button/LogoutButton.vue';
 import LogoutDialog from '@/components/ui/dialog/LogoutDialog.vue';
+import StatusModal from '@/components/pharmacist/StatusModal.vue';
 import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { showToast } from '@/lib/utils';
 
 // Modal state
 const showLogoutModal = ref(false);
+const showStatusModal = ref(false);
+const selectedPatientId = ref<number | null>(null);
+const selectedStatus = ref<Patient['status']>('accepted');
+
+watch(() => showStatusModal.value, (newVal) => {
+  console.log(newVal);
+});
 
 // Get initial data from backend
 const page = usePage();
@@ -43,6 +51,7 @@ const stats = ref({
 // UI states
 const showFilters = ref(false);
 const isLoading = ref(false);
+const isPrescriptionStatusUpdating = ref(false);
 const itemsPerPageOptions = [8, 12, 16, 24];
 
 // Debounced search
@@ -128,12 +137,12 @@ watch(() => filters.value.per_page, () => {
 // Helper function to get status indicator color
 const getStatusColor = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
+    case 'accepted':
       return 'bg-amber-400';
-    case 'success':
+    case 'preparing':
+      return 'bg-blue-500';
+    case 'completed':
       return 'bg-emerald-500';
-    case 'failed':
-      return 'bg-rose-500';
     default:
       return 'bg-gray-400';
   }
@@ -142,12 +151,12 @@ const getStatusColor = (status: Patient['status']) => {
 // Helper function to get status background gradient
 const getStatusGradient = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
+    case 'accepted':
       return 'from-amber-50 to-yellow-100 border-amber-200';
-    case 'success':
+    case 'preparing':
+      return 'from-blue-50 to-blue-100 border-blue-200';
+    case 'completed':
       return 'from-emerald-50 to-green-100 border-emerald-200';
-    case 'failed':
-      return 'from-rose-50 to-red-100 border-rose-200';
     default:
       return 'from-gray-50 to-gray-100 border-gray-200';
   }
@@ -155,12 +164,12 @@ const getStatusGradient = (status: Patient['status']) => {
 
 const getStatusText = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
-      return 'Menunggu';
-    case 'success':
+    case 'accepted':
+      return 'Diterima';
+    case 'preparing':
+      return 'Dibuat';
+    case 'completed':
       return 'Selesai';
-    case 'failed':
-      return 'Gagal';
     default:
       return 'Unknown';
   }
@@ -279,6 +288,49 @@ const paginationInfo = computed(() => {
     total: pagination.value.total || 0,
   };
 });
+
+// Update prescription status using Inertia router
+const updatePrescriptionStatus = () => {
+  if (isPrescriptionStatusUpdating.value || !selectedPatientId.value) return;
+  
+  isPrescriptionStatusUpdating.value = true;
+  
+  router.put(`/dashboard/pharmacist/patient/${selectedPatientId.value}/status`, {
+    prescription_status: selectedStatus.value,
+    notes_pharmacist: selectedStatus.value === 'completed' ? 'Obat telah disiapkan dan siap diambil' : null
+  }, {
+    preserveState: true,
+    preserveScroll: true,
+    onSuccess: () => {
+      showToast('Status resep berhasil diupdate', 'success');
+      // Refresh the current page to get updated data
+      // navigateWithFilters();
+    },
+    onError: (errors) => {
+      console.error('Error updating status:', errors);
+      showToast('Terjadi kesalahan saat mengupdate status resep', 'error');
+    },
+    onFinish: () => {
+      isPrescriptionStatusUpdating.value = false;
+    }
+  });
+};
+
+// Open status modal for specific patient
+const openStatusModal = (patient: Patient) => {
+  selectedPatientId.value = patient.id;
+  selectedStatus.value = patient.status;
+  showStatusModal.value = true;
+};
+
+// Quick status update functions
+const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
+  if (isPrescriptionStatusUpdating.value) return;
+  
+  selectedPatientId.value = patient.id;
+  selectedStatus.value = newStatus;
+  updatePrescriptionStatus();
+};
 </script>
 
 <template>
@@ -314,7 +366,7 @@ const paginationInfo = computed(() => {
           <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-blue-100 text-xs font-medium">Total Pasien</p>
+                <p class="text-blue-100 text-xs font-medium">Total Resep</p>
                 <p class="text-2xl font-bold">{{ stats.total.total }}</p>
               </div>
               <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
@@ -342,7 +394,7 @@ const paginationInfo = computed(() => {
           <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-amber-100 text-xs font-medium">Menunggu</p>
+                <p class="text-amber-100 text-xs font-medium">Diterima</p>
                 <p class="text-2xl font-bold">{{ stats.total.pending }}</p>
               </div>
               <div class="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center">
@@ -355,16 +407,16 @@ const paginationInfo = computed(() => {
             </div>
           </div>
           
-          <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-4 text-white">
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-red-100 text-xs font-medium">Gagal</p>
-                <p class="text-2xl font-bold">{{ stats.total.failed }}</p>
+                <p class="text-blue-100 text-xs font-medium">Dibuat</p>
+                <p class="text-2xl font-bold">{{ stats.total.preparing || 0 }}</p>
               </div>
-              <div class="w-10 h-10 bg-red-400 rounded-lg flex items-center justify-center">
+              <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V3a1 1 0 011-1z"
                     clip-rule="evenodd" />
                 </svg>
               </div>
@@ -447,9 +499,9 @@ const paginationInfo = computed(() => {
                   class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-['Inter'] disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="all">Semua Status</option>
-                  <option value="waiting">Menunggu</option>
-                  <option value="success">Selesai</option>
-                  <option value="failed">Gagal</option>
+                  <option value="accepted">Diterima</option>
+                  <option value="preparing">Dibuat</option>
+                  <option value="completed">Selesai</option>
                 </select>
               </div>
 
@@ -557,10 +609,9 @@ const paginationInfo = computed(() => {
           <div v-else class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               <div v-for="patient in patientsData" :key="patient.id"
-                :class="['bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex flex-col gap-4 p-4 group cursor-pointer justify-between hover:-translate-y-[0.3em]',
+                :class="['bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex flex-col gap-4 p-4 group justify-between ',
                          { 'opacity-50 pointer-events-none': isLoading }]">
                 
-                  <a :href="route('dashboard.pharmacist.patient', patient.id)">
                 <div class="flex flex-col gap-4">
                   <!-- Patient Header with Status and Time -->
                   <div class="flex justify-between items-center gap-2">
@@ -644,8 +695,59 @@ const paginationInfo = computed(() => {
                   </div>
                 </div>
 
+                <div class="flex flex-col">
+                  <!-- Quick Status Actions -->
+                  <div v-if="patient.status !== 'completed'" class="flex gap-2 mb-3">
+                    <button 
+                      v-if="patient.status === 'accepted'"
+                      @click="quickUpdateStatus(patient, 'preparing')"
+                      :disabled="isPrescriptionStatusUpdating"
+                      :class="[
+                        'flex-1 px-2 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-xs font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50',
+                        isPrescriptionStatusUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      ]"
+                    >
+                      <div class="flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <span>Mulai Dibuat</span>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      v-if="patient.status === 'preparing'"
+                      @click="quickUpdateStatus(patient, 'completed')"
+                      :disabled="isPrescriptionStatusUpdating"
+                      :class="[
+                        'flex-1 px-2 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg text-xs font-bold hover:from-emerald-600 hover:to-emerald-700 transition-all duration-300 disabled:opacity-50',
+                        isPrescriptionStatusUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      ]"
+                    >
+                      <div class="flex items-center justify-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <span>Selesai</span>
+                      </div>
+                    </button>
+                    
+                    <button 
+                      @click="openStatusModal(patient)"
+                      :disabled="isPrescriptionStatusUpdating"
+                      :class="[
+                        'px-2 py-1.5 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg text-xs font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-300 disabled:opacity-50',
+                        isPrescriptionStatusUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                      ]"
+                    >
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+                      </svg>
+                    </button>
+                  </div>
+
                   <!-- Detail Button -->
-                  <!-- <a :href="route('dashboard.pharmacist.patient', patient.id)"
+                  <a :href="route('dashboard.pharmacist.patient', patient.id)"
                     class="w-full bg-primary text-white text-xs font-bold font-['Inter'] rounded-lg py-3 text-center hover:from-blue-600 hover:to-indigo-700 cursor-pointer transition-all duration-300 transform shadow-md hover:shadow-lg">
                     <div class="flex items-center justify-center gap-1.5">
                       <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -656,8 +758,8 @@ const paginationInfo = computed(() => {
                       </svg>
                       Lihat Detail
                     </div>
-                  </a> -->
-            </a>
+                  </a>
+                </div>
               </div>
 
             </div>
@@ -778,35 +880,35 @@ const paginationInfo = computed(() => {
         <div class="flex flex-col gap-3">
           <h3 class="text-base font-semibold text-gray-700 font-['Inter']">Status Legenda</h3>
 
-          <!-- Payment Failed -->
-          <div
-            class="flex items-center gap-3 p-3 bg-gradient-to-r from-rose-50 to-red-100 border border-rose-200 rounded-lg">
-            <div class="w-3 h-3 bg-rose-500 rounded-full shadow-sm"></div>
-            <div class="flex-1">
-              <p class="text-xs font-semibold text-gray-800 font-['Inter']">
-                Gagal
-              </p>
-              <p class="text-xs text-gray-600 font-['Inter']">
-                Perlu tindakan lebih lanjut
-              </p>
-            </div>
-          </div>
-
-          <!-- Waiting Payment -->
+          <!-- Accepted -->
           <div
             class="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-yellow-100 border border-amber-200 rounded-lg">
             <div class="w-3 h-3 bg-amber-400 rounded-full shadow-sm"></div>
             <div class="flex-1">
               <p class="text-xs font-semibold text-gray-800 font-['Inter']">
-                Menunggu
+                Diterima
               </p>
               <p class="text-xs text-gray-600 font-['Inter']">
-                Sedang dalam proses
+                Resep telah diterima
               </p>
             </div>
           </div>
 
-          <!-- Payment Success -->
+          <!-- Preparing -->
+          <div
+            class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div class="w-3 h-3 bg-blue-500 rounded-full shadow-sm"></div>
+            <div class="flex-1">
+              <p class="text-xs font-semibold text-gray-800 font-['Inter']">
+                Dibuat
+              </p>
+              <p class="text-xs text-gray-600 font-['Inter']">
+                Sedang menyiapkan obat
+              </p>
+            </div>
+          </div>
+
+          <!-- Completed -->
           <div
             class="flex items-center gap-3 p-3 bg-gradient-to-r from-emerald-50 to-green-100 border border-emerald-200 rounded-lg">
             <div class="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div>
@@ -815,7 +917,7 @@ const paginationInfo = computed(() => {
                 Selesai
               </p>
               <p class="text-xs text-gray-600 font-['Inter']">
-                Transaksi selesai
+                Obat siap diambil
               </p>
             </div>
           </div>
@@ -826,7 +928,7 @@ const paginationInfo = computed(() => {
           <h3 class="text-base font-semibold text-gray-700 font-['Inter'] mb-3">Filter Aktif</h3>
           <div class="flex flex-col gap-2">
             <div v-if="filters.search" class="flex items-center justify-between p-2 bg-blue-50 border border-blue-200 rounded-md">
-              <span class="text-xs font-medium text-blue-800">Nama: {{ filters.search }}</span>
+              <span class="text-xs font-medium text-blue-800 line-clamp-2 text-ellipsis">Nama: {{ filters.search }}</span>
               <button 
                 @click="filters.search = ''"
                 :disabled="isLoading"
@@ -915,6 +1017,13 @@ const paginationInfo = computed(() => {
         </div>
       </div>
     </div>
+
+    <StatusModal 
+      :show="showStatusModal" 
+      :patientId="selectedPatientId" 
+      :status="selectedStatus"
+      @close="showStatusModal = false"
+    />
 
     <LogoutDialog 
       :show="showLogoutModal" 

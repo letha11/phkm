@@ -107,6 +107,36 @@ class PatientDetailController extends Controller
     }
 
     /**
+     * Update prescription status
+     */
+    public function updatePrescriptionStatus(Request $request, string $id): RedirectResponse
+    {
+        $request->validate([
+            'prescription_status' => 'required|string|in:accepted,preparing,completed',
+            'notes_pharmacist' => 'nullable|string'
+        ]);
+
+        $prescription = Prescription::findOrFail($id);
+
+        DB::transaction(function () use ($prescription, $request) {
+            $prescription->prescription_status = $request->prescription_status;
+            $prescription->notes_pharmacist = $request->notes_pharmacist;
+
+            // If status is completed, update payment status to waiting
+            if ($request->prescription_status === 'completed') {
+                $prescription->payment_status = 'waiting';
+            }
+
+            $prescription->save();
+        });
+
+        return redirect()->back()->with([
+            'message' => 'Status resep berhasil diupdate',
+            'type' => 'success',
+        ]);
+    }
+
+    /**
      * Format prescription data consistently
      */
     private function formatPrescriptionData(Prescription $prescription): array
@@ -121,7 +151,8 @@ class PatientDetailController extends Controller
             'medications' => $prescription->prescriptionItems->map(function ($item) {
                 return $item->medicine->name . ', ' . $item->medicine_dosage_prescribed . ', ' . $item->medicine_amount_prescribed;
             })->join("\n"),
-            'status' => $prescription->payment_status,
+            'status' => $prescription->prescription_status,
+            'prescription_status' => $prescription->prescription_status,
             'payment_status' => $prescription->payment_status,
             'doctor_name' => $prescription->doctor->name,
             'submitted_at' => $prescription->submitted_at,

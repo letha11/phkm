@@ -6,7 +6,8 @@ export interface Patient {
   timeAgo: string;
   complaint: string;
   medications: string;
-  status: 'waiting' | 'success' | 'failed';
+  status: 'accepted' | 'preparing' | 'completed';
+  prescription_status: 'accepted' | 'preparing' | 'completed';
   payment_status: 'waiting' | 'failed' | 'success';
   doctor_name: string;
   submitted_at: string;

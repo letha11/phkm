@@ -4,6 +4,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { formatCurrency, showToast } from '@/lib/utils';
 import type { Patient } from '@/types/patient';
 import PrescriptionActions from '@/components/pharmacist/PrescriptionActions.vue';
+import StatusModal from '@/components/pharmacist/StatusModal.vue';
 
 interface InvoiceItem {
   medicine_name: string;
@@ -88,12 +89,12 @@ watch(() => page.props, (newProps) => {
 // Helper functions for status display
 const getStatusColor = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
+    case 'accepted':
       return 'bg-amber-400';
-    case 'success':
+    case 'preparing':
+      return 'bg-blue-500';
+    case 'completed':
       return 'bg-emerald-500';
-    case 'failed':
-      return 'bg-rose-500';
     default:
       return 'bg-gray-400';
   }
@@ -101,12 +102,12 @@ const getStatusColor = (status: Patient['status']) => {
 
 const getStatusGradient = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
-      return 'from-amber-50 to-yellow-100 border-amber-200'; 
-    case 'success':
-      return 'from-emerald-50 to-green-100 border-emerald-200'; 
-    case 'failed':
-      return 'from-rose-50 to-red-100 border-rose-200'; 
+    case 'accepted':
+      return 'from-amber-50 to-yellow-100 border-amber-200';
+    case 'preparing':
+      return 'from-blue-50 to-blue-100 border-blue-200';
+    case 'completed':
+      return 'from-emerald-50 to-green-100 border-emerald-200';
     default:
       return 'from-gray-50 to-gray-100 border-gray-200';
   }
@@ -114,12 +115,12 @@ const getStatusGradient = (status: Patient['status']) => {
 
 const getStatusText = (status: Patient['status']) => {
   switch (status) {
-    case 'waiting':
-      return 'Menunggu';
-    case 'success':
+    case 'accepted':
+      return 'Diterima';
+    case 'preparing':
+      return 'Dibuat';
+    case 'completed':
       return 'Selesai';
-    case 'failed':
-      return 'Gagal';
     default:
       return 'Unknown';
   }
@@ -128,34 +129,35 @@ const getStatusText = (status: Patient['status']) => {
 // Format medications into array for better display
 const formattedMedications = computed(() => patient.value.medications.split('\n'));
 
-// Update prescription status using Inertia router
-const updatePrescriptionStatus = () => {
-  if (isLoading.value) return;
+// // Update prescription status using Inertia router
+// const updatePrescriptionStatus = () => {
+//   if (isLoading.value) return;
   
-  isLoading.value = true;
-  showStatusModal.value = false;
+//   isLoading.value = true;
+//   showStatusModal.value = false;
   
-  router.put(`/dashboard/pharmacist/patient/${patient.value.id}/status`, {
-    status: selectedStatus.value
-  }, {
-    preserveState: true,
-    preserveScroll: true,
-    onSuccess: (page) => {
-      // Update local patient data with response
-      if (page.props.patient) {
-        patient.value = page.props.patient as Patient;
-      }
-      showToast('Status berhasil diupdate', 'success');
-    },
-    onError: (errors) => {
-      console.error('Error updating status:', errors);
-      showToast('Terjadi kesalahan saat mengupdate status', 'error');
-    },
-    onFinish: () => {
-      isLoading.value = false;
-    }
-  });
-};
+//   router.put(`/dashboard/pharmacist/patient/${patient.value.id}/status`, {
+//     prescription_status: selectedStatus.value,
+//     notes_pharmacist: selectedStatus.value === 'completed' ? 'Obat telah disiapkan dan siap diambil' : null
+//   }, {
+//     preserveState: true,
+//     preserveScroll: true,
+//     onSuccess: (page) => {
+//       // Update local patient data with response
+//       if (page.props.patient) {
+//         patient.value = page.props.patient as Patient;
+//       }
+//       showToast('Status resep berhasil diupdate', 'success');
+//     },
+//     onError: (errors) => {
+//       console.error('Error updating status:', errors);
+//       showToast('Terjadi kesalahan saat mengupdate status resep', 'error');
+//     },
+//     onFinish: () => {
+//       isLoading.value = false;
+//     }
+//   });
+// };
 
 // Process payment using Inertia router
 const processPayment = () => {
@@ -437,21 +439,37 @@ const printInvoice = () => {
                     {{ getStatusText(patient.status) }}
                   </p>
                   <p class="text-xs font-medium text-gray-600 font-['Inter'] mt-1">
-                    <span v-if="patient.status === 'waiting'">Menunggu penanganan apoteker</span>
-                    <span v-else-if="patient.status === 'success'">Resep telah diselesaikan</span>
-                    <span v-else-if="patient.status === 'failed'">Terjadi masalah dalam penanganan</span>
+                    <span v-if="patient.status === 'accepted'">Menunggu penanganan apoteker</span>
+                    <span v-else-if="patient.status === 'preparing'">Resep sedang dibuat</span>
+                    <span v-else-if="patient.status === 'completed'">Resep telah diselesaikan</span>
                   </p>
                 </div>
               </div>
               
-              <!-- Status timestamp -->
-              <div class="text-right bg-white/50 backdrop-blur-sm rounded-lg p-3">
-                <p class="text-xs font-bold text-gray-600 font-['Inter'] uppercase tracking-wide">
-                  Terakhir Update
-                </p>
-                <p class="text-sm font-bold text-gray-800 font-['Inter'] mt-1">
-                  {{ patient.timeAgo }}
-                </p>
+              <div class="flex flex-col gap-2">
+                <!-- Status Update Button -->
+                <button 
+                  v-if="patient.status !== 'completed'"
+                  @click="showStatusModal = true"
+                  class="px-3 py-1.5 bg-white/80 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white transition-all duration-300 text-xs font-medium border border-white/50 shadow-sm"
+                >
+                  <div class="flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+                    </svg>
+                    Update Status
+                  </div>
+                </button>
+                
+                <!-- Status timestamp -->
+                <div class="text-right bg-white/50 backdrop-blur-sm rounded-lg p-3">
+                  <p class="text-xs font-bold text-gray-600 font-['Inter'] uppercase tracking-wide">
+                    Terakhir Update
+                  </p>
+                  <p class="text-sm font-bold text-gray-800 font-['Inter'] mt-1">
+                    {{ patient.timeAgo }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -504,37 +522,12 @@ const printInvoice = () => {
       </div>
     </div>
 
-    <!-- Status Update Modal -->
-    <div v-if="showStatusModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl shadow-2xl p-6 mx-4 max-w-md w-full border border-gray-100">
-        <h3 class="text-lg font-bold text-gray-800 font-['Epilogue'] mb-4">Update Status Resep</h3>
-        
-        <div class="space-y-3 mb-4">
-          <label class="flex items-center gap-2">
-            <input type="radio" v-model="selectedStatus" value="success" class="text-blue-600">
-            <span class="font-medium text-sm">Selesai</span>
-          </label>
-          <label class="flex items-center gap-2">
-            <input type="radio" v-model="selectedStatus" value="failed" class="text-blue-600">
-            <span class="font-medium text-sm">Gagal</span>
-          </label>
-          <label class="flex items-center gap-2">
-            <input type="radio" v-model="selectedStatus" value="waiting" class="text-blue-600">
-            <span class="font-medium text-sm">Menunggu</span>
-          </label>
-        </div>
-
-        <div class="flex gap-2">
-          <button @click="showStatusModal = false" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer text-sm">
-            Batal
-          </button>
-          <button @click="updatePrescriptionStatus" :disabled="isLoading" 
-                  class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 cursor-pointer text-sm">
-            {{ isLoading ? 'Memproses...' : 'Update' }}
-          </button>
-        </div>
-      </div>
-    </div>
+    <StatusModal
+      :show="showStatusModal"
+      :patientId="patient.id"
+      :status="patient.status"
+      @close="showStatusModal = false"
+    />
           
     <!-- Payment Modal -->
     <div v-if="showPaymentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">

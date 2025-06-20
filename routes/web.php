@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
         
         // Patient detail routes
         Route::get('dashboard/pharmacist/patient/{id}', [PharmacistPatientDetailController::class, 'show'])->name('dashboard.pharmacist.patient');
-        Route::put('dashboard/pharmacist/patient/{id}/status', [PharmacistPatientDetailController::class, 'updateStatus'])->name('pharmacist.patient.status');
+        Route::put('dashboard/pharmacist/patient/{id}/status', [PharmacistPatientDetailController::class, 'updatePrescriptionStatus'])->name('pharmacist.patient.status');
         Route::post('dashboard/pharmacist/patient/{id}/payment', [PharmacistPatientDetailController::class, 'processPayment'])->name('pharmacist.patient.payment');
         Route::post('dashboard/pharmacist/patient/{id}/invoice', [PharmacistPatientDetailController::class, 'getInvoiceData'])->name('pharmacist.patient.invoice');
     });

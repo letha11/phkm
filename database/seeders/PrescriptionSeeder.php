@@ -82,7 +82,7 @@ class PrescriptionSeeder extends Seeder
         }
 
         // Create prescriptions
-        // $statuses = ['accepted', 'preparing', 'completed'];
+        $prescriptionStatuses = ['accepted', 'preparing', 'completed'];
         $paymentStatuses = ['waiting', 'success', 'failed'];
         $symptoms = [
             'Demam dan batuk',
@@ -100,21 +100,21 @@ class PrescriptionSeeder extends Seeder
             $submittedAt = Carbon::now()->subDays(rand(0, 7))->subHours(rand(0, 23));
             
             // Determine status based on time
-            // $prescriptionStatus = $statuses[array_rand($statuses)];
-            $paymentStatus = $paymentStatuses[array_rand($paymentStatuses)];
-            
+            $prescriptionStatus = $prescriptionStatuses[array_rand($prescriptionStatuses)];
+            $paymentStatus = $paymentStatus = $prescriptionStatus === 'completed' ? 'success' : 'waiting';
 
             $prescription = Prescription::create([
                 'patient_id' => $patient->id,
                 'doctor_id' => $doctor->id,
                 'symptom' => $symptoms[array_rand($symptoms)],
+                'prescription_status' => $prescriptionStatus,
                 'payment_status' => $paymentStatus,
                 'submitted_at' => $submittedAt,
                 'consultation_fee' => 50000,
                 'ppn_rate_applied' => 0.11,
                 'payment_method' => $paymentStatus === 'success' ? ['cash', 'card', 'transfer'][array_rand(['cash', 'card', 'transfer'])] : null,
                 'paid_at' => $paymentStatus === 'success' ? $submittedAt->addHours(rand(1, 6)) : null,
-                'notes_pharmacist' => $paymentStatus === 'success' ? 'Pembayaran berhasil diproses' : null,
+                'notes_pharmacist' => $prescriptionStatus === 'completed' ? 'Obat telah disiapkan dan siap diambil' : null,
             ]);
 
             // Add 1-3 prescription items per prescription
