@@ -5,23 +5,33 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Http\Controllers\Pharmacist\DashboardController as PharmacistDashboardController;
 use App\Http\Controllers\Pharmacist\PatientDetailController as PharmacistPatientDetailController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
 Route::middleware('auth')->group(function () {
-    // Route::group(['middleware' => 'role:' . User::ROLE_ADMIN], function () {
-    //     Route::get('dashboard', function () {
-    //         return Livewire::render('admin');
-    //     })->name('dashboard');
-    // });
-    
-    // Route::middleware('role:' . User::ROLE_ADMIN)->group(function () {
-    //     Route::get('dashboard', function () {
-    //         return Inertia::render('Dashboard');
-    //     })->name('dashboard');
-    // });
+    // Special admin redirect route
+    Route::get('admin-redirect', function () {
+        return Inertia::render('auth/AdminRedirect');
+    })->name('admin.redirect')->middleware('role:' . User::ROLE_ADMIN);
+
+    // General dashboard route that redirects to appropriate dashboard based on user role
+    Route::get('dashboard', function () {
+        $user = Auth::user();
+
+        if ($user->hasRole(User::ROLE_ADMIN)) {
+            return redirect()->route('admin.redirect');
+        } elseif ($user->hasRole(User::ROLE_DOCTOR)) {
+            return redirect()->route('dashboard.doctor');
+        } elseif ($user->hasRole(User::ROLE_PHARMACIST)) {
+            return redirect()->route('dashboard.pharmacist');
+        }
+
+        // Fallback for users without specific roles
+        return redirect()->route('login');
+    })->name('dashboard');
 
     Route::group(['middleware' => 'role:' . User::ROLE_DOCTOR], function () {
         Route::get('dashboard/doctor', function () {
@@ -32,7 +42,7 @@ Route::middleware('auth')->group(function () {
     Route::group(['middleware' => 'role:' . User::ROLE_PHARMACIST], function () {
         // Dashboard routes
         Route::get('dashboard/pharmacist', [PharmacistDashboardController::class, 'index'])->name('dashboard.pharmacist');
-        
+
         // Patient detail routes
         Route::get('dashboard/pharmacist/patient/{id}', [PharmacistPatientDetailController::class, 'show'])->name('dashboard.pharmacist.patient');
         Route::put('dashboard/pharmacist/patient/{id}/status', [PharmacistPatientDetailController::class, 'updatePrescriptionStatus'])->name('pharmacist.patient.status');
