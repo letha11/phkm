@@ -18,20 +18,21 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Models\User;
+use App\Filament\Pages\Dashboard;
 
 class AdminPanelProvider extends PanelProvider
 {
 
     public static function getUrl(): string
     {
-        return url('dashboard');
+        return url('admin');
     }
 
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('dashboard')
-            ->path('dashboard')
+            ->id('admin')
+            ->path('admin')
             ->brandName('MedLink Admin')
             ->colors([
                 'primary' => Color::Sky,
@@ -41,13 +42,12 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop(true)
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
-//            ->pages([
-//                Pages\Dashboard::class,
-//            ])
+            ->pages([
+                Dashboard::class,
+            ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
