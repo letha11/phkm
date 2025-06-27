@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Http\Controllers\Pharmacist\DashboardController as PharmacistDashboardController;
 use App\Http\Controllers\Pharmacist\PatientDetailController as PharmacistPatientDetailController;
+use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
@@ -34,9 +35,10 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     Route::group(['middleware' => 'role:' . User::ROLE_DOCTOR], function () {
-        Route::get('dashboard/doctor', function () {
-            return Inertia::render('doctor/Dashboard');
-        })->name('dashboard.doctor');
+        Route::get('dashboard/doctor', [DoctorDashboardController::class, 'index'])->name('dashboard.doctor');
+        Route::get('doctor/patients/search', [DoctorDashboardController::class, 'searchPatients'])->name('doctor.patients.search');
+        Route::get('doctor/medicines/search', [DoctorDashboardController::class, 'searchMedicines'])->name('doctor.medicines.search');
+        Route::post('doctor/prescription/submit', [DoctorDashboardController::class, 'submitPrescription'])->name('doctor.prescription.submit');
     });
 
     Route::group(['middleware' => 'role:' . User::ROLE_PHARMACIST], function () {

@@ -7,6 +7,8 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import Toast, {PluginOptions} from 'vue-toastification';
+import VCalendar from 'v-calendar';
+import 'v-calendar/style.css';
 import "vue-toastification/dist/index.css";
 
 const options: PluginOptions = {
@@ -36,6 +38,7 @@ createInertiaApp({
             .use(plugin)
             .use(Toast, options)
             .use(ZiggyVue)
+            .use(VCalendar)
             .mount(el);
     },
     progress: {
