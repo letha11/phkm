@@ -40,6 +40,13 @@ class AdminPanelProvider extends PanelProvider
             ->darkMode(false)
             ->font('poppins')
             ->sidebarCollapsibleOnDesktop(true)
+            ->navigationGroups([
+                'Patient Management',
+                'Inventory Management', 
+                'Medical Records',
+                'Financial Management',
+                'User Management',
+            ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             ->pages([

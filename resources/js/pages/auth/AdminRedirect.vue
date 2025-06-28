@@ -9,7 +9,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Redirecting..." />
+    <Head title="Menuju Panel Admin..." />
     <div class="min-h-screen flex flex-col items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-lg p-8 text-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>

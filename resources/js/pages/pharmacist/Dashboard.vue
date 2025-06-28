@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import type { Patient } from '@/types/patient.d';
 import type { PaginationData, FilterData, StatsData } from '@/types';
-import LogoutButton from '@/components/ui/button/LogoutButton.vue';
-import LogoutDialog from '@/components/ui/dialog/LogoutDialog.vue';
-import StatusModal from '@/components/pharmacist/StatusModal.vue';
 import { ref, computed, watch } from 'vue';
 import { usePage, router } from '@inertiajs/vue3';
 import { showToast } from '@/lib/utils';
+
+import { Head } from '@inertiajs/vue3';
+import LogoutButton from '@/components/ui/button/LogoutButton.vue';
+import LogoutDialog from '@/components/ui/dialog/LogoutDialog.vue';
+import StatusModal from '@/components/pharmacist/StatusModal.vue';
+import Icon from '@/components/Icon.vue';
+import SliderVerticalIcon from '@/components/icons/SliderVeticalIcon.vue';
+import WarningIcon from '@/components/icons/WarningIcon.vue';
+import FilterIcon from '@/components/icons/FilterIcon.vue';
+import InfoIcon from '@/components/icons/InfoIcon.vue';
+import CogIcon from '@/components/icons/CogIcon.vue';
+import PaperPlaneIcon from '@/components/icons/PaperPlaneIcon.vue';
 
 // Modal state
 const showLogoutModal = ref(false);
@@ -14,9 +23,6 @@ const showStatusModal = ref(false);
 const selectedPatientId = ref<number | null>(null);
 const selectedStatus = ref<Patient['status']>('accepted');
 
-watch(() => showStatusModal.value, (newVal) => {
-  console.log(newVal);
-});
 
 // Get initial data from backend
 const page = usePage();
@@ -323,6 +329,10 @@ const openStatusModal = (patient: Patient) => {
   showStatusModal.value = true;
 };
 
+const updateStatus = (status: Patient['status']) => {
+  selectedStatus.value = status;
+};
+
 // Quick status update functions
 const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
   if (isPrescriptionStatusUpdating.value) return;
@@ -334,6 +344,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
 </script>
 
 <template>
+  <Head title="Dashboard Apoteker" />
   <!-- Main Dashboard Container -->
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
 
@@ -390,6 +401,20 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
               </div>
             </div>
           </div>
+          
+                    
+          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-blue-100 text-xs font-medium">Dibuat</p>
+                <p class="text-2xl font-bold">{{ stats.total.preparing || 0 }}</p>
+              </div>
+              <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
+                <CogIcon class="w-5 h-5" text-white/>
+              </div>
+            </div>
+          </div>
+
 
           <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
@@ -398,27 +423,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
                 <p class="text-2xl font-bold">{{ stats.total.pending }}</p>
               </div>
               <div class="w-10 h-10 bg-amber-400 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                    clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-blue-100 text-xs font-medium">Dibuat</p>
-                <p class="text-2xl font-bold">{{ stats.total.preparing || 0 }}</p>
-              </div>
-              <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd"
-                    d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V3a1 1 0 011-1z"
-                    clip-rule="evenodd" />
-                </svg>
+                <PaperPlaneIcon class="w-5 h-5" />
               </div>
             </div>
           </div>
@@ -430,9 +435,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
           <div :class="['flex items-center justify-between', showFilters ? 'mb-4' : '']">
             <div class="flex items-center gap-2">
               <div class="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
-                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
-                </svg>
+                <FilterIcon class="w-5 h-5 text-white" />
               </div>
               <h3 class="text-lg font-bold text-gray-800 font-['Epilogue']">
                 Filter Data
@@ -649,7 +652,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
                         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                       </svg>
                       <p class="text-xs font-medium font-['Inter']">
-                        Dr. {{ patient.doctor_name }}
+                        {{ patient.doctor_name }}
                       </p>
                     </div>
                   </div>
@@ -660,11 +663,12 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
                   <!-- Complaint Section -->
                   <div class="flex flex-col gap-2">
                     <div class="flex items-center gap-1.5">
-                      <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <WarningIcon class="w-4 h-4 text-red-500" />
+                      <!-- <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                           d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                           clip-rule="evenodd" />
-                      </svg>
+                      </svg> -->
                       <p class="text-xs font-bold text-gray-800 font-['Inter']">
                         Keluhan
                       </p>
@@ -703,7 +707,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
                       @click="quickUpdateStatus(patient, 'preparing')"
                       :disabled="isPrescriptionStatusUpdating"
                       :class="[
-                        'flex-1 px-2 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-xs font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50',
+                        'flex-1 px-2 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-xs font-bold hover:from-blue-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 cursor-pointer' ,
                         isPrescriptionStatusUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       ]"
                     >
@@ -740,9 +744,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
                         isPrescriptionStatusUpdating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                       ]"
                     >
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                      </svg>
+                      <SliderVerticalIcon class="w-3 h-3 text-white" />
                     </button>
                   </div>
 
@@ -862,11 +864,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
           <div class="flex items-center gap-2">
             <div
               class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 10-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clip-rule="evenodd" />
-              </svg>
+              <InfoIcon class="w-4 h-4 text-white" />
             </div>
             <h2 class="text-lg font-bold text-gray-800 font-['Epilogue']">
               Informasi
@@ -876,9 +874,9 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
           <div class="w-full h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div>
         </div>
 
-        <!-- Status Legend -->
+        <!-- Status -->
         <div class="flex flex-col gap-3">
-          <h3 class="text-base font-semibold text-gray-700 font-['Inter']">Status Legenda</h3>
+          <h3 class="text-base font-semibold text-gray-700 font-['Inter']">Status</h3>
 
           <!-- Accepted -->
           <div
@@ -985,7 +983,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
         </div>
 
         <!-- Quick Actions -->
-        <div class="mt-3">
+        <div v-if="hasActiveFilters" class="mt-3">
           <h3 class="text-base font-semibold text-gray-700 font-['Inter'] mb-3">Aksi Cepat</h3>
           <div class="flex flex-col gap-2">
             <button
@@ -1001,18 +999,6 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
             >
               {{ isLoading ? 'Memuat...' : 'Reset Semua Filter' }}
             </button>
-            <button
-              @click="showToast('Laporan Harian berhasil diunduh')"
-              :disabled="isLoading"
-              :class="[
-                'w-full text-white text-xs font-semibold py-2.5 px-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg',
-                isLoading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 cursor-pointer'
-              ]"
-            >
-              Laporan Harian
-            </button>
           </div>
         </div>
       </div>
@@ -1023,6 +1009,7 @@ const quickUpdateStatus = (patient: Patient, newStatus: Patient['status']) => {
       :patientId="selectedPatientId" 
       :status="selectedStatus"
       @close="showStatusModal = false"
+      @update:status="updateStatus"
     />
 
     <LogoutDialog 

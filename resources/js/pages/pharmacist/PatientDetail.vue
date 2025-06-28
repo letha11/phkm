@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { router, usePage, Head } from '@inertiajs/vue3';
 import { formatCurrency, showToast } from '@/lib/utils';
 import type { Patient } from '@/types/patient';
+
 import PrescriptionActions from '@/components/pharmacist/PrescriptionActions.vue';
 import StatusModal from '@/components/pharmacist/StatusModal.vue';
+import SliderVerticalIcon from '@/components/icons/SliderVeticalIcon.vue';
 
 interface InvoiceItem {
   medicine_name: string;
@@ -235,6 +237,8 @@ const printInvoice = () => {
 </script>
 
 <template>
+  <Head :title="`Detail Pasien - ${patient.name}`" />
+  
   <!-- Main Patient Detail Container -->
   <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
     <!-- Main Content Area -->
@@ -454,10 +458,9 @@ const printInvoice = () => {
                   class="px-3 py-1.5 bg-white/80 backdrop-blur-sm text-gray-700 rounded-lg hover:bg-white transition-all duration-300 text-xs font-medium border border-white/50 shadow-sm"
                 >
                   <div class="flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
-                    </svg>
                     Update Status
+                    <SliderVerticalIcon class="w-3 h-3 text-blue-600" />
+
                   </div>
                 </button>
                 

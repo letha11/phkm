@@ -1,8 +1,9 @@
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { showToast } from '@/lib/utils';
+import { Patient } from '@/types/patient';
 
 interface Props {
   show: boolean;
@@ -12,21 +13,28 @@ interface Props {
 
 interface Emits {
   (e: 'close'): void;
+  (e: 'update:status', status: Patient['status']): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+console.log(`PROPS: ${props.status}`);
 
 const selectedStatus = ref<string>('');
 const isLoading = ref(false);
 
 // Watch for props changes to update selectedStatus
 watch(() => props.status, (newStatus) => {
+  console.log(`NEW STATUS: ${newStatus}`);
   if (newStatus) {
     selectedStatus.value = newStatus;
   }
-}, { immediate: true });
+}, { immediate: true, deep: true });
 
+onMounted(() => {
+  console.log(`COMPUTED STATUS: ${selectedStatus.value}`);
+});
 
 // Update prescription status
 const updatePrescriptionStatus = () => {
@@ -42,6 +50,7 @@ const updatePrescriptionStatus = () => {
     preserveScroll: true,
     onSuccess: () => {
       showToast('Status resep berhasil diupdate', 'success');
+      emit('update:status', selectedStatus.value as Patient['status']);
       emit('close');
     },
     onError: (errors) => {
