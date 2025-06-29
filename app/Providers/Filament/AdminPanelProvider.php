@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->id('admin')
             ->path('admin')
-            ->brandName('MedLink Admin')
+            ->brandName('MedEase Admin')
             ->colors([
                 'primary' => Color::Sky,
             ])
@@ -54,6 +54,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
+                \App\Filament\Admin\Widgets\StatsOverview::class,
+                \App\Filament\Admin\Widgets\SimpleRevenueChart::class,
+                \App\Filament\Admin\Widgets\TopMedicinesChart::class,
+                \App\Filament\Admin\Widgets\LowStockTable::class,
+                \App\Filament\Admin\Widgets\RecentActivity::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([
