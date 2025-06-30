@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 
 import LogoutButton from '@/components/ui/button/LogoutButton.vue';
@@ -11,15 +10,7 @@ import PatientSearch from '@/components/doctor/PatientSearch.vue';
 import MedicineSearch from '@/components/doctor/MedicineSearch.vue';
 import { router } from '@inertiajs/vue3';
 import { showToast } from '@/lib/utils';
-import type { Medicine, PatientData, PrescriptionMedicine } from '@/types/medicine.d';
-
-interface Props {
-  medicines: Medicine[];
-}
-
-const props = defineProps<Props>();
-
-const page = usePage();
+import type { PatientData, PrescriptionMedicine } from '@/types/medicine.d';
 
 // Form data using Inertia's useForm
 const form = useForm({
@@ -55,7 +46,7 @@ const submitPrescription = () => {
   
   form.post('/doctor/prescription/submit', {
     onSuccess: (page) => {
-      let flash = page.props.flash as { message?: string, type?: string };
+      const flash = page.props.flash as { message?: string, type?: string };
       showToast(flash.message || 'Resep berhasil dikirim', flash.type as 'success' | 'error' | 'warning' | 'info' | undefined || 'success');
       resetForm();
     },
@@ -157,8 +148,7 @@ const confirmLogout = () => {
               </div>
               
               <MedicineSearch 
-                v-model="form.medicines" 
-                :available-medicines="props.medicines"
+                v-model="form.medicines"
               />
               
               <div v-if="form.errors.medicines" class="text-red-600 text-sm">

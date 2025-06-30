@@ -3,13 +3,12 @@ import { ref, watch, onMounted, nextTick } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, } from '@/components/ui/card';
 import type { Medicine, PrescriptionMedicine } from '@/types/medicine.d';
 import { showToast } from '@/lib/utils';
 
 const props = defineProps<{
   modelValue: PrescriptionMedicine[];
-  availableMedicines?: Medicine[];
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +21,8 @@ const isSearching = ref(false);
 const showResults = ref(false);
 const searchTimeout = ref<number | null>(null);
 const prescribedMedicines = ref<PrescriptionMedicine[]>([]);
+const medicineDetails = ref<Map<number, Medicine>>(new Map());
+const editingField = ref<string | null>(null);
 
 let isInternalUpdate = false
 
@@ -29,6 +30,13 @@ let isInternalUpdate = false
 watch(() => props.modelValue, (newValue) => {
   if (!isInternalUpdate) {
     prescribedMedicines.value = [...newValue];
+    
+    // Fetch medicine details for any medicines we don't have cached
+    newValue.forEach(medicine => {
+      if (!medicineDetails.value.has(medicine.medicine_id)) {
+        fetchMedicineDetails(medicine.medicine_id);
+      }
+    });
     
     // Reset search query when form is reset (when modelValue becomes empty)
     if (newValue.length === 0) {
@@ -49,6 +57,12 @@ watch(prescribedMedicines, (newValue) => {
 }, { deep: true });
 
 const searchMedicines = async () => {
+  if (!searchQuery.value.trim()) {
+    searchResults.value = [];
+    showResults.value = false;
+    return;
+  }
+  
   isSearching.value = true;
   
   try {
@@ -56,9 +70,15 @@ const searchMedicines = async () => {
     const data = await response.json();
     searchResults.value = data;
     showResults.value = data.length > 0;
+    
+    // Store medicine details for later use
+    data.forEach((medicine: Medicine) => {
+      medicineDetails.value.set(medicine.id, medicine);
+    });
   } catch (error) {
     console.error('Error searching medicines:', error);
     searchResults.value = [];
+    showResults.value = false;
   } finally {
     isSearching.value = false;
   }
@@ -81,9 +101,12 @@ const addMedicine = (medicine: Medicine) => {
   );
   
   if (existingIndex >= 0) {
-    alert('Obat ini sudah ditambahkan ke resep!');
+    showToast('Obat ini sudah ditambahkan ke resep!', 'warning');
     return;
   }
+
+  // Store medicine details for future reference
+  medicineDetails.value.set(medicine.id, medicine);
 
   const newMedicine: PrescriptionMedicine = {
     medicine_id: medicine.id,
@@ -103,17 +126,107 @@ const removeMedicine = (index: number) => {
 };
 
 const updateMedicine = (index: number, field: keyof PrescriptionMedicine, value: any) => {
-  if (prescribedMedicines.value[index]) {
-    prescribedMedicines.value[index] = {
-      ...prescribedMedicines.value[index],
-      [field]: value,
-    };
+  if (!prescribedMedicines.value[index]) return;
+  
+  // For amount field, validate against stock
+  if (field === 'amount') {
+    const medicine = prescribedMedicines.value[index];
+    const medicineDetail = medicineDetails.value.get(medicine.medicine_id);
+    const stock = medicineDetail?.stock || 0;
+    
+    if (value > stock) {
+      showToast(`Jumlah melebihi stok yang tersedia (${stock})`, 'warning');
+      value = stock; // Cap the value to available stock
+    }
+    
+    if (value < 1) {
+      value = 1; // Minimum amount is 1
+    }
+  }
+  
+  // Update immediately
+  prescribedMedicines.value[index] = {
+    ...prescribedMedicines.value[index],
+    [field]: value,
+  };
+};
+
+// Debounced validation for stock checking
+const validationTimeouts = ref<Map<number, number>>(new Map());
+
+// Watch for amount changes and validate against stock
+const validateAmount = (index: number) => {
+  const medicine = prescribedMedicines.value[index];
+  if (!medicine) return;
+  
+  const medicineDetail = medicineDetails.value.get(medicine.medicine_id);
+  const stock = medicineDetail?.stock || 0;
+  const amount = medicine.amount;
+  
+  if (amount > stock) {
+    showToast(`Jumlah melebihi stok yang tersedia (${stock})`, 'warning');
+    // Cap the value to available stock
+    prescribedMedicines.value[index].amount = stock;
+  }
+  
+  if (amount < 1) {
+    prescribedMedicines.value[index].amount = 1;
   }
 };
 
-const getMedicineById = (id: number): Medicine | undefined => {
-  return props.availableMedicines?.find(m => m.id === id);
+// Handle immediate updates on blur/change/enter for validation
+const handleAmountCommit = (index: number) => {
+  // Clear any pending timeout
+  if (validationTimeouts.value.has(index)) {
+    clearTimeout(validationTimeouts.value.get(index));
+    validationTimeouts.value.delete(index);
+  }
+  
+  validateAmount(index);
+  editingField.value = null;
 };
+
+// Handle focus to track editing state
+const handleAmountFocus = (index: number) => {
+  editingField.value = `amount-${index}`;
+};
+
+// Watch for amount changes in prescribedMedicines for real-time validation
+watch(prescribedMedicines, (newMedicines) => {
+  if (isInternalUpdate) return;
+  
+  newMedicines.forEach((medicine, index) => {
+    // Clear any existing timeout for this index
+    if (validationTimeouts.value.has(index)) {
+      clearTimeout(validationTimeouts.value.get(index));
+    }
+    
+    // Set debounced validation
+    const timeoutId = setTimeout(() => {
+      validateAmount(index);
+      validationTimeouts.value.delete(index);
+    }, 500); // 500ms debounce for typing validation
+    
+    validationTimeouts.value.set(index, timeoutId);
+  });
+}, { deep: true });
+
+const fetchMedicineDetails = async (id: number): Promise<Medicine | undefined> => {
+  try {
+    const response = await fetch(`/doctor/medicines/${id}`);
+    if (!response.ok) {
+      throw new Error('Medicine not found');
+    }
+    const medicine = await response.json();
+    medicineDetails.value.set(id, medicine);
+    return medicine;
+  } catch (error) {
+    console.error('Error fetching medicine details:', error);
+    return undefined;
+  }
+};
+
+// Removed getMedicineById function - now using medicineDetails.get() directly for better performance
 
 // Close search results when clicking outside
 const searchContainer = ref<HTMLDivElement>();
@@ -152,12 +265,12 @@ onMounted(() => {
             <div
               v-for="medicine in searchResults"
               :key="medicine.id"
-              @click="medicine.stock <= 0 ? showToast('Stok obat habis', 'error') : addMedicine(medicine)"
+              @click="medicine.stock <= 0 ? showToast(`Stok ${medicine.name} habis`, 'error') : addMedicine(medicine)"
               :class="[
-                'p-3 cursor-pointer border-b border-gray-100 last:border-b-0',
-                medicine.is_available 
-                  ? 'hover:bg-gray-50' 
-                  : 'bg-red-50 hover:bg-red-100 opacity-75'
+                'p-3 border-b border-gray-100 last:border-b-0',
+                medicine.stock <= 0 
+                  ? 'bg-red-50 opacity-75 cursor-not-allowed' 
+                  : 'cursor-pointer hover:bg-gray-50'
               ]"
             >
               <div class="flex justify-between items-start">
@@ -174,11 +287,20 @@ onMounted(() => {
                     Rp {{ medicine.price.toLocaleString('id-ID') }}
                   </div>
                   <div :class="[
-                    'text-xs',
-                    medicine.stock > 0 ? 'text-green-600' : 'text-red-600'
+                    'text-xs font-medium',
+                    medicine.stock > 10 ? 'text-green-600' : 
+                    medicine.stock > 0 ? 'text-yellow-600' : 'text-red-600'
                   ]">
-                    Stok: {{ medicine.stock }}
-                    <span v-if="medicine.stock === 0" class="font-medium">(Habis)</span>
+                    <span class="inline-flex items-center">
+                      <span :class="[
+                        'w-2 h-2 rounded-full mr-1',
+                        medicine.stock > 10 ? 'bg-green-500' : 
+                        medicine.stock > 0 ? 'bg-yellow-500' : 'bg-red-500'
+                      ]"></span>
+                      Stok: {{ medicine.stock }}
+                      <span v-if="medicine.stock === 0" class="ml-1">(Habis)</span>
+                      <span v-else-if="medicine.stock <= 10" class="ml-1">(Terbatas)</span>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -199,7 +321,7 @@ onMounted(() => {
       <div class="space-y-3">
         <Card v-for="(medicine, index) in prescribedMedicines" :key="`${medicine.medicine_id}-${index}`">
           <CardContent class="p-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
               <!-- Medicine Name -->
               <div class="md:col-span-1">
                 <Label class="text-xs text-gray-600">Nama Obat</Label>
@@ -221,7 +343,7 @@ onMounted(() => {
                 >
                   <option value="">Pilih dosis</option>
                   <option 
-                    v-for="dosage in getMedicineById(medicine.medicine_id)?.dosages || []" 
+                    v-for="dosage in (medicineDetails.get(medicine.medicine_id)?.dosages || [])" 
                     :key="dosage" 
                     :value="dosage"
                   >
@@ -236,20 +358,35 @@ onMounted(() => {
                 <Input
                   :id="`amount-${index}`"
                   type="number"
-                  :value="medicine.amount"
-                  @input="updateMedicine(index, 'amount', parseInt(($event.target as HTMLInputElement).value) || 1)"
+                  v-model="prescribedMedicines[index].amount"
+                  @focus="handleAmountFocus(index)"
+                  @blur="handleAmountCommit(index)"
+                  @change="handleAmountCommit(index)"
+                  @keydown.enter="handleAmountCommit(index)"
                   min="1"
-                  :max="getMedicineById(medicine.medicine_id)?.stock || 999"
-                  class="mt-1"
+                  :class="[
+                    'mt-1',
+                    editingField === `amount-${index}` ? 'ring-2 ring-blue-500 border-blue-500' : ''
+                  ]"
                   required
                 />
-                <div class="text-xs text-gray-500 mt-1">
-                  Stok: {{ getMedicineById(medicine.medicine_id)?.stock || 0 }}
+                <div class="text-xs mt-1">
+                  <span :class="[
+                    'font-medium',
+                    (medicineDetails.get(medicine.medicine_id)?.stock || 0) <= medicine.amount
+                      ? 'text-red-600' 
+                      : (medicineDetails.get(medicine.medicine_id)?.stock || 0) <= 10 
+                        ? 'text-yellow-600' 
+                        : 'text-gray-500'
+                  ]">
+                    Stok: {{ medicineDetails.get(medicine.medicine_id)?.stock || 0 }}
+                    <span v-if="(medicineDetails.get(medicine.medicine_id)?.stock || 0) <= medicine.amount" class="ml-1">⚠️</span>
+                  </span>
                 </div>
               </div>
               
               <!-- Remove Button -->
-              <div class="md:col-span-1 flex justify-end">
+              <div class="md:col-span-1 flex justify-end items-center h-full">
                 <Button
                   type="button"
                   variant="outline"

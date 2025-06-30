@@ -23,26 +23,7 @@ class DashboardController extends Controller
      */
     public function index(): Response
     {
-        // Get available medicines for the form
-        $medicines = Medicine::select('id', 'name', 'stock', 'dosages', 'price', 'type', 'description')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($medicine) {
-                return [
-                    'id' => $medicine->id,
-                    'name' => $medicine->name,
-                    'stock' => $medicine->stock,
-                    'dosages' => $medicine->dosages,
-                    'price' => $medicine->price,
-                    'type' => $medicine->type,
-                    'description' => $medicine->description,
-                    'is_available' => $medicine->stock > 0,
-                ];
-            });
-
-        return Inertia::render('doctor/Dashboard', [
-            'medicines' => $medicines,
-        ]);
+        return Inertia::render('doctor/Dashboard');
     }
 
     /**
@@ -79,12 +60,15 @@ class DashboardController extends Controller
     {
         $search = $request->get('search', '');
         
-        // if (empty($search) || strlen($search) < 2) {
-        //     return response()->json([]);
-        // }
-
-        $medicines = Medicine::where('name', 'like', '%' . $search . '%')
-            ->select('id', 'name', 'stock', 'dosages', 'price', 'type', 'description')
+        $query = Medicine::select('id', 'name', 'stock', 'dosages', 'price', 'type', 'description');
+        
+        // If search is provided, filter by name
+        if (!empty($search)) {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+        
+        $medicines = $query
+            ->orderByRaw('stock > 0 DESC') // Show available medicines first
             ->orderBy('name')
             ->limit(20)
             ->get()
@@ -102,6 +86,29 @@ class DashboardController extends Controller
             });
 
         return response()->json($medicines);
+    }
+
+    /**
+     * Get medicine details by ID
+     */
+    public function getMedicine(Request $request, int $id): \Illuminate\Http\JsonResponse
+    {
+        $medicine = Medicine::find($id);
+        
+        if (!$medicine) {
+            return response()->json(['error' => 'Medicine not found'], 404);
+        }
+        
+        return response()->json([
+            'id' => $medicine->id,
+            'name' => $medicine->name,
+            'stock' => $medicine->stock,
+            'dosages' => $medicine->dosages,
+            'price' => $medicine->price,
+            'type' => $medicine->type,
+            'description' => $medicine->description,
+            'is_available' => $medicine->stock > 0,
+        ]);
     }
 
     /**

@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::get('dashboard/doctor', [DoctorDashboardController::class, 'index'])->name('dashboard.doctor');
         Route::get('doctor/patients/search', [DoctorDashboardController::class, 'searchPatients'])->name('doctor.patients.search');
         Route::get('doctor/medicines/search', [DoctorDashboardController::class, 'searchMedicines'])->name('doctor.medicines.search');
+        Route::get('doctor/medicines/{id}', [DoctorDashboardController::class, 'getMedicine'])->name('doctor.medicines.show');
         Route::post('doctor/prescription/submit', [DoctorDashboardController::class, 'submitPrescription'])->name('doctor.prescription.submit');
     });
 
