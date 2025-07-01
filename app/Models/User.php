@@ -6,13 +6,15 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Prescription;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
@@ -21,7 +23,6 @@ class User extends Authenticatable
     public const ROLE_DOCTOR = 'doctor';
     public const ROLE_PHARMACIST = 'pharmacist';
 
-    
 
     /**
      * The attributes that are mass assignable.
@@ -63,5 +64,11 @@ class User extends Authenticatable
     public function prescriptions(): HasMany
     {
         return $this->hasMany(Prescription::class, 'doctor_id');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        // Check if the user has the required role to access the panel
+        return $this->hasRole(self::ROLE_ADMIN);
     }
 }
