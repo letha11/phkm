@@ -17,11 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-        $middleware->trustHosts(at: ['*']);
+        $middleware->trustProxies(at: ['*']);
 
         $middleware->web(append: [
             HandleCors::class,
-            TrustProxies::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
