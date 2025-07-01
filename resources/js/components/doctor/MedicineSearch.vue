@@ -50,11 +50,12 @@ watch(() => props.modelValue, (newValue) => {
 watch(prescribedMedicines, (newValue) => {
   isInternalUpdate = true;
   emit('update:modelValue', [...newValue]);
+  console.log(`[MedicineSearch] emitted: ${JSON.stringify([...newValue])}`);
 
   nextTick(() => {
     isInternalUpdate = false;
   });
-}, { deep: true });
+}, { immediate: true, deep: true });
 
 const searchMedicines = async () => {
   if (!searchQuery.value.trim()) {

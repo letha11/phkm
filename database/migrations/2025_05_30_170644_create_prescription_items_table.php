@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('prescription_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('prescription_id')->constrained('prescriptions');
-            $table->foreignId('medicine_id')->constrained('medicines');
+            $table->foreignId('prescription_id')->constrained('prescriptions')->onDelete('cascade');
+            $table->foreignId('medicine_id')->constrained('medicines')->onDelete('cascade');
             $table->string('medicine_dosage_prescribed');
             $table->integer('medicine_amount_prescribed');
             $table->decimal('medicine_price_at_prescription', 8, 2);

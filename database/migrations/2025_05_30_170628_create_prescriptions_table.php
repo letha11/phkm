@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('prescriptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('patient_id')->constrained('patients');
-            $table->foreignId('doctor_id')->constrained('users');
+            $table->foreignId('doctor_id');
             $table->text('symptom');
             $table->enum('prescription_status', ['accepted', 'preparing', 'completed'])->default('accepted')->index();
             $table->enum('payment_status', ['waiting', 'failed', 'success'])->default('waiting')->index();

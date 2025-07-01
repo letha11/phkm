@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -149,6 +149,7 @@ const confirmLogout = () => {
               
               <MedicineSearch 
                 v-model="form.medicines"
+                @update:modelValue="form.medicines = $event"
               />
               
               <div v-if="form.errors.medicines" class="text-red-600 text-sm">

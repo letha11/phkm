@@ -34,6 +34,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('MedEase Admin')
+            ->brandLogo(asset('assets/images/logo-vertical.png'))
+            ->brandLogoHeight('6rem')
             ->colors([
                 'primary' => Color::Sky,
             ])
